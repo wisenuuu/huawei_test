@@ -1,0 +1,358 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Users Management</title>
+</head>
+
+<body onload="fetchUsers(); loadModal(); loadDeleteModal(); loadUpdateModal();">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold py-10">
+            Users Management
+        </h1>
+
+        <button onclick="openModal()" class="rounded-md bg-slate-800 py-2 px-4 text-sm text-white mb-4 cursor-pointer">
+            Create
+        </button>
+
+        <div id="modalContainer"></div>
+        <div id="deleteModalContainer"></div>
+        <div id="updateModalContainer"></div>
+
+        <div class="relative flex flex-col overflow-scroll text-gray-700 bg-white shadow-md rounded-lg bg-clip-border">
+
+            <table class="w-full text-left table-auto min-w-max">
+                <thead>
+                    <tr>
+                        <th class="p-4 border-b border-slate-300 bg-slate-50">
+                            <p class="block text-sm font-normal leading-none text-slate-500">No</p>
+                        </th>
+                        <th class="p-4 border-b border-slate-300 bg-slate-50">
+                            <p class="block text-sm font-normal leading-none text-slate-500">Name</p>
+                        </th>
+                        <th class="p-4 border-b border-slate-300 bg-slate-50">
+                            <p class="block text-sm font-normal leading-none text-slate-500">Username</p>
+                        </th>
+                        <th class="p-4 border-b border-slate-300 bg-slate-50">
+                            <p class="block text-sm font-normal leading-none text-slate-500">Email</p>
+                        </th>
+                        <th class="p-4 border-b border-slate-300 bg-slate-50">
+                            <p class="block text-sm font-normal leading-none text-slate-500">Action</p>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody id="userTableBody"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        async function fetchUsers() {
+            const response = await fetch('http://localhost:3000/users')
+            const result = await response.json()
+            const users = result.data
+
+            const tbody = document.getElementById("userTableBody")
+
+            let html = "";
+            users.forEach(user => {
+                html += `
+                    <tr class="hover:bg-slate-50">
+                         <td class="p-4 border-b border-slate-200">
+                            <p class="block text-sm text-slate-800">${user.id}</p>
+                        </td>
+                        <td class="p-4 border-b border-slate-200">
+                            <p class="block text-sm text-slate-800">${user.name}</p>
+                        </td>
+                        <td class="p-4 border-b border-slate-200">
+                            <p class="block text-sm text-slate-800">${user.username}</p>
+                        </td>
+                        <td class="p-4 border-b border-slate-200">
+                            <p class="block text-sm text-slate-800">${user.email}</p>
+                        </td>
+                        <td class="p-4 border-b border-slate-200">
+                            <button onclick="openUpdateModal(${user.id})" class="text-blue-600 font-semibold mr-1 hover:underline cursor-pointer">
+                                Edit
+                            </button>
+                            <button onclick="openDeleteModal(${user.id})" class="text-red-600 font-semibold hover:underline cursor-pointer">
+                                Delete
+                            </button>
+
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        async function loadModal() {
+            const modalFile = await fetch("create.html");
+            const modalHTML = await modalFile.text();
+            document.getElementById("modalContainer").innerHTML = modalHTML;
+        }
+
+        function openModal() {
+            const backdrop = document.querySelector("[data-dialog-backdrop='user-modal']");
+            backdrop.classList.remove("pointer-events-none");
+            backdrop.classList.add("opacity-100");
+        }
+
+        function closeModal() {
+            const backdrop = document.querySelector("[data-dialog-backdrop='user-modal']");
+            backdrop.classList.add("pointer-events-none");
+            backdrop.classList.remove("opacity-100");
+        }
+
+        document.addEventListener("click", function (e) {
+            if (e.target.getAttribute("data-dialog-backdrop-close") === "true") {
+                closeModal();
+                closeDeleteModal();
+                closeUpdateModal();
+            }
+        });
+
+        function resetFormErrors() {
+            const fields = ['name', 'username', 'email', 'password'];
+
+            fields.forEach(field => {
+                const input = document.getElementById(`${field}Input`);
+                if (input) {
+                    input.classList.remove("border-red-500");
+                    input.classList.add("border-slate-200");
+                }
+
+                const errorTxt = document.getElementById(`${field}Error`);
+                if (errorTxt) errorTxt.textContent = "";
+            });
+        }
+
+        function showFieldError(field, message) {
+            const input = document.getElementById(`${field}Input`);
+            const errorTxt = document.getElementById(`${field}Error`);
+
+            if (input && errorTxt) {
+                input.classList.remove("border-slate-200");
+                input.classList.add("border-red-500");
+
+                errorTxt.textContent = message;
+            }
+        }
+
+        async function submitUserForm() {
+            const name = document.getElementById("nameInput").value.trim();
+            const username = document.getElementById("usernameInput").value.trim();
+            const email = document.getElementById("emailInput").value.trim();
+            const password = document.getElementById("passwordInput").value.trim();
+
+            resetFormErrors();
+
+            try {
+                const response = await fetch("http://localhost:3000/users", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name,
+                        username,
+                        email,
+                        password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const msg = result.message ? result.message.toLowerCase() : "unknown error";
+
+                    if (msg.includes("name is required") && !msg.includes("username")) {
+                        showFieldError("name", result.message);
+                    }
+
+                    if (msg.includes("username is required") || (msg.includes("username") && msg.includes("exist"))) {
+                        showFieldError("username", result.message);
+                    }
+
+                    if (msg.includes("email is required") || msg.includes("email") && msg.includes("exist")) {
+                        showFieldError("email", result.message);
+                    }
+
+                    if (msg.includes("password is required")) {
+                        showFieldError("password", result.message);
+                    }
+
+
+                    return;
+                }
+
+                alert("User created successfully!");
+                closeModal();
+                fetchUsers();
+
+            } catch (error) {
+                console.error(error);
+                alert("Error connecting to API");
+            }
+        }
+
+        async function loadDeleteModal() {
+            const modalFile = await fetch("delete.html");
+            const modalHTML = await modalFile.text();
+            document.getElementById("deleteModalContainer").innerHTML = modalHTML;
+        }
+
+        async function loadUpdateModal() {
+            const modalFile = await fetch("update.html");
+            const modalHTML = await modalFile.text();
+            document.getElementById("updateModalContainer").innerHTML = modalHTML;
+        }
+        let selectedUserId = null;
+
+        function openDeleteModal(id) {
+            selectedUserId = id;
+
+            const backdrop = document.querySelector("[data-dialog-backdrop='delete-modal']");
+            backdrop.classList.remove("pointer-events-none");
+            backdrop.classList.add("opacity-100");
+        }
+
+        async function openUpdateModal(id) {
+            selectedUserId = id;
+
+            const backdrop = document.querySelector("[data-dialog-backdrop='update-modal']");
+            backdrop.classList.remove("pointer-events-none");
+            backdrop.classList.add("opacity-100");
+
+            const response = await fetch(`http://localhost:3000/users/${id}`);
+            const result = await response.json();
+
+            const user = result.data;
+
+            document.getElementById("updateUserId").value = user.id;
+            document.getElementById("updateNameInput").value = user.name;
+            document.getElementById("updateUsernameInput").value = user.username;
+            document.getElementById("updateEmailInput").value = user.email;
+
+            document.getElementById("updatePasswordInput").value = "";
+        }
+
+        function closeDeleteModal() {
+            const backdrop = document.querySelector("[data-dialog-backdrop='delete-modal']");
+            backdrop.classList.add("pointer-events-none");
+            backdrop.classList.remove("opacity-100");
+
+            selectedUserId = null;
+        }
+
+        function closeUpdateModal() {
+            const backdrop = document.querySelector("[data-dialog-backdrop='update-modal']");
+            backdrop.classList.add("pointer-events-none");
+            backdrop.classList.remove("opacity-100");
+
+            selectedUserId = null;
+        }
+
+        async function confirmDelete() {
+            if (!selectedUserId) return;
+
+            try {
+                const response = await fetch(`http://localhost:3000/users/${selectedUserId}`, {
+                    method: "DELETE"
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    alert(result.message || "Gagal menghapus user");
+                    return;
+                }
+
+                alert("User berhasil dihapus!");
+
+                closeDeleteModal();
+                fetchUsers();
+
+            } catch (error) {
+                console.error(error);
+                alert("Tidak dapat terhubung ke server");
+            }
+        }
+
+        async function submitUpdateForm() {
+            const id = document.getElementById("updateUserId").value;
+
+            const name = document.getElementById("updateNameInput").value.trim();
+            const username = document.getElementById("updateUsernameInput").value.trim();
+            const email = document.getElementById("updateEmailInput").value.trim();
+            const password = document.getElementById("updatePasswordInput").value.trim();
+
+            clearUpdateErrors();
+
+            const payload = {
+                name,
+                username,
+                email,
+            };
+
+            if (password !== "") {
+                payload.password = password;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/users/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const msg = result.message.toLowerCase();
+
+                    if (msg.includes("name") && !msg.includes("username")) {
+                        document.getElementById("updateNameError").textContent = result.message;
+                    }
+
+                    if (msg.includes("username")) {
+                        document.getElementById("updateUsernameError").textContent = result.message;
+                    }
+
+                    if (msg.includes("email")) {
+                        document.getElementById("updateEmailError").textContent = result.message;
+                    }
+
+                    if (msg.includes("password")) {
+                        document.getElementById("updatePasswordError").textContent = result.message;
+                    }
+
+                    return;
+                }
+
+                alert("User updated successfully!");
+
+                closeUpdateModal();
+                fetchUsers();
+
+            } catch (err) {
+                console.error(err);
+                alert("Error connecting to API");
+            }
+        }
+
+        function clearUpdateErrors() {
+            document.getElementById("updateNameError").textContent = "";
+            document.getElementById("updateUsernameError").textContent = "";
+            document.getElementById("updateEmailError").textContent = "";
+            document.getElementById("updatePasswordError").textContent = "";
+        }
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,58 @@
+<div data-dialog-backdrop="update-modal" data-dialog-backdrop-close="true" class="pointer-events-none fixed inset-0 z-[999] grid place-items-center
+            bg-black/50 opacity-0 backdrop-blur-sm transition-opacity duration-300">
+
+    <div data-dialog="update-modal"
+        class="relative mx-auto w-full max-w-[24rem] rounded-lg overflow-hidden shadow-sm bg-white">
+
+        <div class="flex items-center justify-center h-24 bg-slate-800 text-white">
+            <h3 class="text-2xl">Update User</h3>
+        </div>
+
+        <div class="flex flex-col gap-4 p-6">
+
+            <input id="updateUserId" type="hidden" />
+
+            <div>
+                <label class="block mb-2 text-sm text-slate-600">Name</label>
+                <input id="updateNameInput" type="text"
+                    class="w-full bg-transparent text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-2 outline-none focus:border-slate-800 transition-all" />
+                <p id="updateNameError" class="text-red-500 text-xs mt-1"></p>
+            </div>
+
+            <div>
+                <label class="block mb-2 text-sm text-slate-600">Username</label>
+                <input id="updateUsernameInput" type="text"
+                    class="w-full bg-transparent text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-2 outline-none focus:border-slate-800 transition-all" />
+                <p id="updateUsernameError" class="text-red-500 text-xs mt-1"></p>
+            </div>
+
+            <div>
+                <label class="block mb-2 text-sm text-slate-600">Email</label>
+                <input id="updateEmailInput" type="email"
+                    class="w-full bg-transparent text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-2 outline-none focus:border-slate-800 transition-all" />
+                <p id="updateEmailError" class="text-red-500 text-xs mt-1"></p>
+            </div>
+
+            <div>
+                <label class="block mb-2 text-sm text-slate-600">Password (Optional)</label>
+                <input id="updatePasswordInput" type="password"
+                    class="w-full bg-transparent text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-2 outline-none focus:border-slate-800 transition-all" />
+                <p id="updatePasswordError" class="text-red-500 text-xs mt-1"></p>
+            </div>
+
+        </div>
+
+        <div class="p-6 flex justify-end gap-2">
+            <button onclick="closeUpdateModal()"
+                class="rounded-md border border-slate-300 py-2 px-4 text-center text-sm transition-all shadow-sm hover:shadow-lg text-slate-600 hover:text-white hover:bg-slate-800 hover:border-slate-800 cursor-pointer">
+                Close
+            </button>
+            <button onclick="submitUpdateForm()"
+                class="rounded-md bg-slate-800 py-2 px-4 text-sm text-white cursor-pointer hover:shadow-lg">
+                Update
+            </button>
+        </div>
+
+    </div>
+
+</div>
