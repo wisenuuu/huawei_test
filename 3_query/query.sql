@@ -35,14 +35,12 @@ values (
         '$50',
         '2024-01-24'
     );
-   
 /*
  2. Update table engineer
  */
 update Karyawan
 set salary = '$85'
 where position = 'Engineer';
-
 /*
  3. Hitunng total salary 2021
  */
@@ -70,7 +68,6 @@ months as (
 )
 select sum(salary * total_month) as total_salary_2021
 from months
-
     /*
      4, Sorting Menampilkan Years of experience 
      */
@@ -80,31 +77,21 @@ order by cast(
         replace(year_of_experience, 'Years', '') as decimal
     ) desc
 limit 3;
-
 /*
  5. subquery untuk mencari employee dengan posisi engineer dan pengalaman yang kurang dari sama dengan 3 tahun
  */
-select 
-  name, 
-  year_of_experience 
-from 
-  Karyawan 
-where 
-  position in (
-    select 
-      position 
-    from 
-      Karyawan 
-    where 
-      lower(position) = 'engineer'
-  ) 
-  and year_of_experience in (
-    select 
-      year_of_experience 
-    from 
-      karyawan 
-    where 
-      cast(
-        replace(year_of_experience, 'Years', '') as decimal
-      ) <= 3.0
-  );
+select name,
+    year_of_experience
+from Karyawan
+where position in (
+        select position
+        from Karyawan
+        where lower(position) = 'engineer'
+    )
+    and year_of_experience in (
+        select year_of_experience
+        from karyawan
+        where cast(
+                replace(year_of_experience, 'Years', '') as decimal
+            ) <= 3.0
+    );
